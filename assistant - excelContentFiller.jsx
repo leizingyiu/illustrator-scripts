@@ -10,17 +10,17 @@
 #include "_utils/func_layout_alignChildren.jsx"
 #include "_utils/func_layout_alignToTarget.jsx"
 #include "_utils/func_layout_distributeChildren.jsx"
+#include "_utils/func_layout_spaceChildren.jsx"
 #include "_utils/func_fillText.jsx"
 #include "_utils/func_imgReplace.jsx"
-#include "_utils/func_layout_spaceChildren.jsx"
 
 #include "_utils/utils_artboard.jsx"  
 #include "_utils/utils_group.jsx"  
 
 #include "_utils/utils_select.jsx"
 
-#include "./excelContentFiller - func_queryClosure.jsx"
-#include "./excelContentFiller - UI_tabTextToObjArray.jsx"
+#include "_utils/excelContentFiller - func_queryClosure.jsx"
+#include "_utils/excelContentFiller - UI_tabTextToObjArray.jsx"
 
 var global_config = {
     artboard_gap: 400,                  // 画布间距  
@@ -110,6 +110,7 @@ function main_fn(datas) {
             argArr = argArr || [];
             var fnreg = /.*\{_\(([^\)]*)\) .+/g;
             var _fnDict = {
+
                 "固定行数填充": fillAndKeepLinesForTxtAvatar,
                 "行": fillAndKeepLinesForTxtAvatar,
                 "fillAndKeepLinesForTxtAvatar": fillAndKeepLinesForTxtAvatar,
@@ -120,9 +121,16 @@ function main_fn(datas) {
                 "fillTxtInFrame": fillTxtInFrame,
                 "inFrame": fillTxtInFrame,
 
+                "单行文本框只变宽":fillAreaTxtWider,
+                "单行框变宽":fillAreaTxtWider,
+                "fillAreaTxtWider":fillAreaTxtWider,
+                "fillTxtWider":fillAreaTxtWider,
+
+
                 "文本填充": fillText,
                 "文": fillText,
-                "fillText": fillText
+                "fillText": fillText,
+
             };
 
             var content = '';

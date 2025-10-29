@@ -225,4 +225,192 @@ function fillAndKeepLinesForTxtAvatar(textFrame, content) {
     }
 }
 
+
+/**
+ * 在原 TextFrame 上安全替换文本，自动调整宽度且保留样式
+ * @param {TextFrame} item - 要操作的文本对象
+ * @param {String} newString - 要填入的文本
+ */
+function fillAreaTxtWider(item, newString) {
+    /**
+     * 判断文本样式是否一致
+     */
+    var isUniformStyle = function (tr) {
+        var ca = tr.characterAttributes;
+        var pa = tr.paragraphAttributes;
+
+        for (var i = 0; i < tr.characters.length; i++) {
+            if (!compareCharAttr(tr.characters[i].characterAttributes, ca)) return false;
+        }
+        for (var j = 0; j < tr.paragraphs.length; j++) {
+            if (!compareParaAttr(tr.paragraphs[j].paragraphAttributes, pa)) return false;
+        }
+        return true;
+    }
+
+    /**
+     * 克隆字符样式
+     */
+    var cloneCharAttrs = function (src) {
+        var obj = {};
+        obj.size = src.size;
+        obj.textFont = src.textFont;
+        obj.fillColor = src.fillColor;
+        obj.tracking = src.tracking;
+        obj.horizontalScale = src.horizontalScale;
+        obj.verticalScale = src.verticalScale;
+        obj.kerning = src.kerning;
+        obj.leading = src.leading;
+        obj.opacity = src.opacity;
+        return obj;
+    }
+
+    /**
+     * 克隆段落样式
+     */
+    var cloneParaAttrs = function (src) {
+        var obj = {};
+        obj.justification = src.justification;
+        obj.leftIndent = src.leftIndent;
+        obj.rightIndent = src.rightIndent;
+        obj.spaceBefore = src.spaceBefore;
+        obj.spaceAfter = src.spaceAfter;
+        obj.firstLineIndent = src.firstLineIndent;
+        return obj;
+    }
+
+    /**
+     * 应用字符样式
+     */
+    var applyCharAttrs = function (target, src) {
+        try {
+            target.size = src.size;
+            target.textFont = src.textFont;
+            target.fillColor = src.fillColor;
+            target.tracking = src.tracking;
+            target.horizontalScale = src.horizontalScale;
+            target.verticalScale = src.verticalScale;
+            target.kerning = src.kerning;
+            target.leading = src.leading;
+            target.opacity = src.opacity;
+        } catch (e) { }
+    }
+
+    /**
+     * 应用段落样式
+     */
+    var applyParaAttrs = function (target, src) {
+        try {
+            target.justification = src.justification;
+            target.leftIndent = src.leftIndent;
+            target.rightIndent = src.rightIndent;
+            target.spaceBefore = src.spaceBefore;
+            target.spaceAfter = src.spaceAfter;
+            target.firstLineIndent = src.firstLineIndent;
+        } catch (e) { }
+    }
+
+    /**
+     * 比较字符样式
+     */
+    var compareCharAttr = function (a, b) {
+        if (!a || !b) return false;
+        try {
+            if (a.size !== b.size) return false;
+            if (a.textFont !== b.textFont) return false;
+            if (!compareColor(a.fillColor, b.fillColor)) return false;
+            if (a.tracking !== b.tracking) return false;
+            if (a.horizontalScale !== b.horizontalScale) return false;
+            if (a.verticalScale !== b.verticalScale) return false;
+            if (a.opacity !== b.opacity) return false;
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    /**
+     * 比较段落样式
+     */
+    var compareParaAttr = function (a, b) {
+        if (!a || !b) return false;
+        try {
+            if (a.justification !== b.justification) return false;
+            if (a.leftIndent !== b.leftIndent) return false;
+            if (a.rightIndent !== b.rightIndent) return false;
+            if (a.spaceBefore !== b.spaceBefore) return false;
+            if (a.spaceAfter !== b.spaceAfter) return false;
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    /**
+     * 比较颜色
+     */
+    var compareColor = function (c1, c2) {
+        if (!c1 || !c2) return false;
+        if (c1.typename !== c2.typename) return false;
+        try {
+            if (c1.red !== c2.red) return false;
+            if (c1.green !== c2.green) return false;
+            if (c1.blue !== c2.blue) return false;
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+    if (!item || item.typename !== "TextFrame") {
+        throw new Error ("fillAreaTextWider() : 错误：传入的对象不是 TextFrame");
+        return;
+    }
+
+    // 如果是点文字
+    if (item.kind !== TextType.AREATEXT) {
+        item.contents = newString;
+        return item ;
+    }
+
+    var tr = item.textRange;
+    if (!isUniformStyle(tr)) {
+        throw new Error ("fillAreaTextWider() : 错误：文本框中存在不同样式或颜色，无法安全替换。");
+        return item ;
+    }
+
+    // 记录当前样式
+    var charAttrs = cloneCharAttrs(tr.characterAttributes);
+    var paraAttrs = cloneParaAttrs(tr.paragraphAttributes);
+
+    // 临时点文本用于测量新文字宽度
+    var doc = app.activeDocument;
+    var tmp = doc.textFrames.add();
+    tmp.contents = newString;
+    applyCharAttrs(tmp.textRange.characterAttributes, charAttrs);
+    tmp.position = item.position;
+
+    var tmpWidth = tmp.width;
+    var boxWidth = item.width;
+
+    // === ⚙️ 关键步骤：调整宽度前先清空文本，避免样式断裂 ===
+    item.contents = ""; // 避免 AI 重排导致样式丢失
+    var oldWidth = item.width;
+
+    if (tmpWidth > boxWidth) {
+        item.width = tmpWidth;
+    } else {
+        item.width = boxWidth; // 保持原宽度
+    }
+
+    // 重新设置样式 + 内容
+    applyCharAttrs(item.textRange.characterAttributes, charAttrs);
+    applyParaAttrs(item.textRange.paragraphAttributes, paraAttrs);
+    item.contents = newString;
+
+    // 清理临时对象
+    tmp.remove();
+
+    return item;
+}
+
 // testing();

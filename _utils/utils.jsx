@@ -140,3 +140,13 @@ function log(e, msg, folder, filename, T, maxSize, skipLines) {
         logFile.close();
     }
 }
+
+
+
+function revealFolder(){     
+    if(typeof app.activeDocument =='undefined'){
+        throw new Error("revealFolder() : 当前未打开文档");
+    }
+    app.activeDocument.path;
+    app.activeDocument.path.execute();
+}

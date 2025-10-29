@@ -1,50 +1,6 @@
+#include "_utils/utils.jsx"
 
 (function () {
-
-
-    // 获取当前文档路径并在资源管理器中显示（兼容Mac/Win）
-    function revealInFileManager() {
-        var doc = app.activeDocument;
-        if (doc.fullName != null) {
-            var file = doc.fullName;
-
-            // Mac系统
-            if ($.os.indexOf("Mac") != -1) {
-                var macScript =
-                    'tell application "Finder"\n' +
-                    '    activate\n' +
-                    '    reveal POSIX file "' + file.fsName + '"\n' +
-                    'end tell';
-
-                try {
-                    var as = new File("~/tempScript.scpt");
-                    as.open("w");
-                    as.write(macScript);
-                    as.close();
-
-                    var cmd = "osascript ~/tempScript.scpt";
-                    system(cmd);
-                    File("~/tempScript.scpt").remove();
-                } catch (e) {
-                    alert("Finder显示失败：" + e);
-                }
-            }
-            // Windows系统
-            else {
-                try {
-                    var winPath = file.fsName.replace(/\//g, "\\\\");
-                    var cmd = "explorer.exe /select,\"" + winPath + "\"";
-                    system(cmd);
-                } catch (e) {
-                    alert("资源管理器显示失败：" + e);
-                }
-            }
-        } else {
-            alert("文档未保存，请先保存");
-        }
-    }
-
-
 
     if (app.documents.length === 0) {
         alert("没有打开的文档。");
@@ -108,15 +64,17 @@
 
     // ---  全选 + 扩展 + 全选 + 扩展外观 ---
     try {
+        
+        app.selection = null;
+        app.executeMenuCommand("selectall");
+        app.executeMenuCommand("expandStyle");  // 扩展外观
+        app.redraw();
+
         app.selection = null;
         app.executeMenuCommand("selectall");
         app.executeMenuCommand("Expand3");       // 扩展
         app.redraw();
 
-        app.selection = null;
-        app.executeMenuCommand("selectall");
-        app.executeMenuCommand("expandStyle");  // 扩展外观
-        app.redraw();
     } catch (e) {
         alert("扩展命令执行失败：" + e + ' : ' + e.line);
     }
@@ -138,14 +96,11 @@
 
         alert("✅ 完成：隐藏项已删除，所有对象已扩展，并导出 PDF，打开文件夹看看吧。");
 
-        try {
-            revealInFileManager();
-        } catch () { }
-
+        revealFolder();
+        
         doc.close();
 
     } catch (e) {
         alert("导出 PDF 失败：" + e);
     }
-
 })();
